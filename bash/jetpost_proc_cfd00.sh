@@ -24,12 +24,12 @@ echo Internal rake complete
 
 #Positioning External rake data for matlab script
 echo Positioning external rake data for matlab
-cp $input1/post-proc/external* /home/sal/Desktop/MATLAB/DataRakePlotter/External/input1
-cp $input2/post-proc/external* /home/sal/Desktop/MATLAB/DataRakePlotter/External/input2
+cp $input1/post-proc/external* /home/sal/Desktop/JetPostProc/DataRakePlotter/External/input1
+cp $input2/post-proc/external* /home/sal/Desktop/JetPostProc/DataRakePlotter/External/input2
 echo External rake data positioned
 
 #Positioning Internal rake data for matlab script
 echo Positioning internal rake data
-cp $input1/post-proc/internal* /home/sal/Desktop/MATLAB/DataRakePlotter/Internal/input1
-cp $input2/post-proc/internal* /home/sal/Desktop/MATLAB/DataRakePlotter/Internal/input2
+cp $input1/post-proc/internal* /home/sal/Desktop/JetPostProc/DataRakePlotter/Internal/input1
+cp $input2/post-proc/internal* /home/sal/Desktop/JetPostProc/DataRakePlotter/Internal/input2
 echo Internal rake data positioned
