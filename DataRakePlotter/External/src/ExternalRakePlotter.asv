@@ -1,0 +1,225 @@
+%Cleaning
+clear
+clc
+clf
+
+%Setting the format
+format long
+
+%User input------------------
+
+%Number of Rake Lines
+NumberOfRakeLines = 3;
+
+%Name of simulation that first set of files is coming from
+SimulationTitle1 = 'ICDB-M2-P1';
+File1 = '../input1/externalcenterline.dat';
+File2 = '../input1/external0point2D.dat';
+File3 = '../input1/external0point4D.dat';
+
+%Name of the simulation that the second set of files is coming from
+IsSecondSimulation = 0;
+SimulationTitle2 = 'ICDB-V2-P1';
+File4 = '../input2/externalcenterline.dat';
+File5 = '../input2/external0point2D.dat';
+File6 = '../input2/external0point4D.dat';
+
+%Desired Data Columns
+DesiredData1 = 15;
+DesiredData2 = 16;
+
+%Normalization Pressure
+Pnorm = 101325;
+
+%Normalization Temperature
+Tnorm = 300;
+
+%Pressure Graph Plotting
+presxlimmin = 0;
+presxlimmax = 25;
+presylimmin = 1.5;
+presylimmax = 3.5;
+
+%Temperature Graph Plotting
+tempxlimmin = -1.5;
+tempxlimmax = 0;
+tempylimmin = 1.5;
+tempylimmax = 3.5;
+
+%------------------------------
+%% Importing the Reference Data
+disp('Extracting The Reference Data...');
+Z = importdata('../ReferenceData/ReferenceData.txt');
+LiuLESPitotPressurePosition(:,:) = Z.data(1:end,1);
+LiuLESPitotPressureValues(:,:) = Z.data(1:end,2);
+LiuProbePitotPressurePosition(:,:) = Z.data(1:end,4);
+LiuProbePitotPressureValue(:,:) = Z.data(1:end,5);
+disp('Reference Data Extracted!');
+
+%% Grabbing Data from First File
+%Looping through all of the data files to extract the pressure data
+disp('Extracting the Coordinate Points...'); 
+A = importdata(File1);
+Xcoor(:,:) = A.data(1:end,1);
+
+%Calculating the the X/D as defined by the nozzle exit diameter
+XOverD = Xcoor./0.0728472;
+disp('Coordinate Point Extraction Complete!');
+
+%Extracting the data from the first simulation
+disp('Extracting Desired Data For The First Simulation...');
+PressureSet1(:,:) = A.data(1:end,DesiredData1);
+TemperatureSet1(:,:) = A.data(1:end,DesiredData2);
+
+if NumberOfRakeLines >= 2
+    B = importdata(File2);
+    PressureSet1(:,2) = B.data(1:end,DesiredData1);
+    TemperatureSet1(:,2) = B.data(1:end,DesiredData2);
+end
+   
+if NumberOfRakeLines == 3
+    C = importdata(File3);
+    PressureSet1(:,3) = C.data(1:end,DesiredData1);
+    TemperatureSet1(:,3) = C.data(1:end,DesiredData2);
+end
+disp('First Simulation Data Extraction Complete!');
+   
+if Pnorm ~= 0
+    disp('Normalizing Pressure Data From The First Simulation...');
+    PressureSet1 = PressureSet1./Pnorm;
+    disp('Pressure Normalization of First Simulation Complete!');
+end
+
+if Tnorm ~= 0
+    disp('Normalizing Temperature Data From The First Simulation...');
+    TemperatureSet1 = TemperatureSet1./Tnorm;
+    disp('Temperature Normalization of First Simulation Complete!');
+end
+
+%% Grabbing from Second File
+if IsSecondSimulation == 1 
+    disp('Extracting Desired Data For The Second Simulation...');
+    D = importdata(File4);
+    PressureSet2(:,:) = D.data(1:end,DesiredData1);
+    TemperatureSet2(:,:) = D.data(1:end,DesiredData2);
+    
+    if NumberOfRakeLines >= 2
+        E = importdata(File5);
+        PressureSet2(:,2) = E.data(1:end,DesiredData1);
+        TemperatureSet2(:,2) = E.data(1:end,DesiredData2);
+    end
+
+    if NumberOfRakeLines == 3
+        F = importdata(File6);
+        PressureSet2(:,3) = F.data(1:end,DesiredData1);
+        TemperatureSet2(:,3) = F.data(1:end,DesiredData2);
+    end
+    disp('Second Simulation Data Extraction Complete!');
+    
+    if Pnorm ~= 0
+        disp('Normalizing Pressure Data From The Second Simulation...');
+        PressureSet2 = PressureSet2./Pnorm;
+        disp('Pressure Normalization of Second Simulation Complete!');
+    end
+    
+    if Tnorm ~= 0
+    disp('Normalizing Temperature Data From The Second Simulation...');
+    TemperatureSet2 = TemperatureSet2./Tnorm;
+    disp('Temperature Normalization of Second Simulation Complete!');
+    end
+end
+%% Pressure Plotting
+disp('Plotting...');
+
+%Plotting the Centerline Pressure Values
+subplot(3,1,3)
+hold on
+plot(XOverD(:,1),PressureSet1(:,1));
+if IsSecondSimulation == 1 
+    plot(XOverD(:,1),PressureSet2(:,1));
+end
+hold off
+title('Centerline Pitot Pressure Ratio Vs X/D')
+axis([presxlimmin presxlimmax presylimmin presylimmax])
+xlabel('X/De')
+ylabel('Pitot Pressure/Pinf')
+grid on
+grid minor
+legend(SimulationTitle1,SimulationTitle2,'Location','best')
+
+%Plotting the Y = 0.2D Pressure Values
+subplot(3,1,2)
+hold on
+plot(XOverD(:,1),PressureSet1(:,2));
+if IsSecondSimulation == 1 
+    plot(XOverD(:,1),PressureSet2(:,2));
+end
+hold off
+title('Y = 0.2D Pitot Pressure RatioVs X/D')
+axis([presxlimmin presxlimmax presylimmin presylimmax])
+xlabel('X/De')
+ylabel('Pitot Pressure/Pinf')
+grid on
+grid minor
+legend(SimulationTitle1,SimulationTitle2,'Location','best')
+
+%Plotting the Y = 0.4D Pressure Values
+subplot(3,1,1)
+hold on
+plot(XOverD(:,1),PressureSet1(:,3));
+if IsSecondSimulation == 1 
+    plot(XOverD(:,1),PressureSet2(:,3));
+end
+hold off
+title('Y = 0.4D Pitot Pressure Ratio Vs X/D')
+axis([presxlimmin presxlimmax presylimmin presylimmax])
+xaxis('X/De')
+yaxis('Pitot Pressure/Pinf')
+grid on
+grid minor
+legend(SimulationTitle1,SimulationTitle2,'Location','best')
+
+% %% Temperature Plotting
+% 
+% %Plotting the Centerline Temperature Values
+% figure 
+% subplot(3,1,3)
+% hold on
+% plot(XOverD(:,1),TemperatureSet1(:,1));
+% if IsSecondSimulation == 1 
+%     plot(XOverD(:,1),TemperatureSet2(:,1));
+% end
+% hold off
+% title('Centerline Total Temperature Ratio Vs X/D')
+% axis([tempxlimmin tempxlimmax tempylimmin tempylimmax])
+% grid on
+% grid minor
+% legend(SimulationTitle1,SimulationTitle2,'Location','best')
+% 
+% %Plotting the Y = 0.2D Temperature Values
+% subplot(3,1,2)
+% hold on
+% plot(XOverD(:,1),TemperatureSet1(:,2));
+% if IsSecondSimulation == 1 
+%     plot(XOverD(:,1),TemperatureSet2(:,2));
+% end
+% hold off
+% title('Y = 0.2D Total Pressure RatioVs X/D')
+% axis([tempxlimmin tempxlimmax tempylimmin tempylimmax])
+% grid on
+% grid minor
+% legend(SimulationTitle1,SimulationTitle2,'Location','best')
+% 
+% %Plotting the Y = 0.4D Pressure Values
+% subplot(3,1,1)
+% hold on
+% plot(XOverD(:,1),TemperatureSet1(:,3));
+% if IsSecondSimulation == 1 
+%     plot(XOverD(:,1),TemperatureSet2(:,3));
+% end
+% hold off
+% title('Y = 0.4D Total Pressure Ratio Vs X/D')
+% axis([tempxlimmin tempxlimmax tempylimmin tempylimmax])
+% grid on
+% grid minor
+% legend(SimulationTitle1,SimulationTitle2,'Location','best')

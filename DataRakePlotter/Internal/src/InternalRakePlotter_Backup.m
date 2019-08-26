@@ -1,0 +1,262 @@
+%Cleaning
+clear
+clc
+clf
+
+%Setting the format
+format long
+
+%% User Input
+%User input------------------
+
+%Number of Rake Lines
+NumberOfRakeLines = 3;
+
+%Name of simulation that first set of files is coming from
+SimulationTitle1 = 'ICDSV1-M2-P1';
+File1 = '../input1/internalcenterline.dat';
+File2 = '../input1/internal0point2D.dat';
+File3 = '../input1/internal0point4D.dat';
+
+%Name of the simulation that the second set of files is coming from
+IsSecondSimulation = 1;
+SimulationTitle2 = 'ICDSV2-M2-P1';
+File4 = '../input2/internalcenterline.dat';
+File5 = '../input2/internal0point2D.dat';
+File6 = '../input2/internal0point4D.dat';
+
+%Desired Data Columns
+DesiredData1 = 15;
+DesiredData2 = 16;
+
+%Once all solutions start using prms version, need to fix this
+MohammadCodeCorrection1 = 17;
+MohammadCodeCorrection2 = 18;
+
+
+%Normalization Pressure
+Pnorm = 356208.0375;
+
+%Normalization Temperature
+Tnorm = 300;
+
+%Nozzle Exit Offset From X = 0
+%Sim1Offset = 0.286235919783624;
+Sim1Offset = 0;
+Sim2Offset = 0;
+
+%PLotting stuff
+linewidth = 2;
+fontsize = 12;
+
+%Pressure Graph Plotting
+presxlimmin = -1.5;
+presxlimmax = 0;
+presylimmin = .9;
+presylimmax = 1.1;
+
+%Temperature Graph Plotting
+tempxlimmin = -1.5;
+tempxlimmax = 0;
+tempylimmin = .9;
+tempylimmax = 1.1;
+
+%------------------------------
+
+%Looping through all of the data files to extract the pressure data
+disp('Extracting the Coordinate Points Of The First Simulation...'); 
+A = importdata(File1);
+Xcoor1(:,:) = A.data(1:end,1);
+
+%Calculating the the X/D as defined by the nozzle exit diameter
+XOverD1 = Xcoor1-Sim1Offset;
+XOverD1 = XOverD1./0.0728472;
+disp('Coordinate Point Extraction Of The First Simulation Complete!');
+%% Grabbing Data from First File
+disp('Extracting Desired Data For The First Simulation...');
+PressureSet1(:,:) = A.data(1:end,DesiredData1);
+TemperatureSet1(:,:) = A.data(1:end,DesiredData2);
+
+if NumberOfRakeLines >= 2
+    B = importdata(File2);
+    PressureSet1(:,2) = B.data(1:end,DesiredData1);
+    TemperatureSet1(:,2) = B.data(1:end,DesiredData2);
+end
+   
+if NumberOfRakeLines == 3
+    C = importdata(File3);
+    PressureSet1(:,3) = C.data(1:end,DesiredData1);
+    TemperatureSet1(:,3) = C.data(1:end,DesiredData2);
+end
+disp('First Simulation Data Extraction Complete!');
+   
+if Pnorm ~= 0
+    disp('Normalizing Pressure Data From The First Simulation...');
+    PressureSet1 = PressureSet1./Pnorm;
+    disp('Pressure Normalization of First Simulation Complete!');
+end
+
+if Tnorm ~= 0
+    disp('Normalizing Temperature Data From The First Simulation...');
+    TemperatureSet1 = TemperatureSet1./Tnorm;
+    disp('Temperature Normalization of First Simulation Complete!');
+end
+
+%% Grabbing from Second File
+if IsSecondSimulation == 1 
+    disp('Extracting the Coordinate Points From The Second Simulation...'); 
+    G = importdata(File4);
+    Xcoor2(:,:) = G.data(1:end,1);
+
+    %Calculating the the X/D as defined by the nozzle exit diameter
+    XOverD2 = Xcoor2-Sim2Offset;
+    XOverD2 = XOverD2./0.0728472;
+    disp('Coordinate Point Extraction For The Second Simulation Complete!');
+    
+    disp('Extracting Desired Data For The Second Simulation...');
+    D = importdata(File4);
+    PressureSet2(:,:) = D.data(1:end,MohammadCodeCorrection1);
+    TemperatureSet2(:,:) = D.data(1:end,MohammadCodeCorrection2);
+    
+    if NumberOfRakeLines >= 2
+        E = importdata(File5);
+        PressureSet2(:,2) = E.data(1:end,MohammadCodeCorrection1);
+        TemperatureSet2(:,2) = E.data(1:end,MohammadCodeCorrection2);
+    end
+
+    if NumberOfRakeLines == 3
+        F = importdata(File6);
+        PressureSet2(:,3) = F.data(1:end,MohammadCodeCorrection1);
+        TemperatureSet2(:,3) = F.data(1:end,MohammadCodeCorrection2);
+    end
+    disp('Second Simulation Data Extraction Complete!');
+    
+    if Pnorm ~= 0
+        disp('Normalizing Pressure Data From The Second Simulation...');
+        PressureSet2 = PressureSet2./Pnorm;
+        disp('Pressure Normalization of Second Simulation Complete!');
+    end
+    
+    if Tnorm ~= 0
+    disp('Normalizing Temperature Data From The Second Simulation...');
+    TemperatureSet2 = TemperatureSet2./Tnorm;
+    disp('Temperature Normalization of Second Simulation Complete!');
+    end
+end
+%% Pressure Plotting
+disp('Plotting...');
+
+%Plotting the Centerline Pressure Values
+subplot(3,1,3)
+hold on
+plot(XOverD1(:,1),PressureSet1(:,1),'-k','LineWidth',linewidth);
+if IsSecondSimulation == 1 
+    plot(XOverD2(:,1),PressureSet2(:,1),'--k','LineWidth',linewidth);
+end
+hold off
+title('Centerline Total Pressure Ratio Vs X/D')
+xlabel('X/De','FontWeight', 'bold')
+ylabel('Total Pressure/Pt Inlet','FontWeight', 'bold')
+axis([presxlimmin presxlimmax presylimmin presylimmax])
+grid on
+grid minor
+legend(SimulationTitle1,SimulationTitle2,'Location','best')
+
+%Plotting the Y = 0.2D Pressure Values
+subplot(3,1,2)
+hold on
+plot(XOverD1(:,1),PressureSet1(:,2),'-k','LineWidth',linewidth);
+if IsSecondSimulation == 1 
+    plot(XOverD2(:,1),PressureSet2(:,2),'--k','LineWidth',linewidth);
+end
+hold off
+title('Y = 0.2D Total Pressure RatioVs X/D')
+xlabel('X/De','FontWeight', 'bold')
+ylabel('Total Pressure/Pt Inlet','FontWeight', 'bold')
+axis([presxlimmin presxlimmax presylimmin presylimmax])
+grid on
+grid minor
+legend(SimulationTitle1,SimulationTitle2,'Location','best')
+
+%Plotting the Y = 0.4D Pressure Values
+subplot(3,1,1)
+hold on
+plot(XOverD1(:,1),PressureSet1(:,3),'-k','LineWidth',linewidth);
+if IsSecondSimulation == 1 
+    plot(XOverD2(:,1),PressureSet2(:,3),'--k','LineWidth',linewidth);
+end
+hold off
+title('Y = 0.4D Total Pressure Ratio Vs X/D')
+xlabel('X/De','FontWeight', 'bold')
+ylabel('Total Pressure/Pt Inlet','FontWeight', 'bold')
+axis([presxlimmin presxlimmax presylimmin presylimmax])
+grid on
+grid minor
+legend(SimulationTitle1,SimulationTitle2,'Location','best')
+
+%Setting up the data export
+if IsSecondSimulation == 1
+    pressurefile = strcat('../FiguresOutput/InternalTotalPress_',SimulationTitle1,'Vs',SimulationTitle2,'.png');
+else
+    pressurefile = strcat('../FiguresOutput/InternalTotalPress_',SimulationTitle1,'.png');
+end
+saveas(gcf,pressurefile)
+
+%% Temperature Plotting
+
+%Plotting the Centerline Temperature Values
+figure 
+subplot(3,1,3)
+hold on
+plot(XOverD1(:,1),TemperatureSet1(:,1),'-k','LineWidth',linewidth);
+if IsSecondSimulation == 1 
+    plot(XOverD2(:,1),TemperatureSet2(:,1),'--k','LineWidth',linewidth);
+end
+hold off
+title('Centerline Total Temperature Ratio Vs X/D')
+xlabel('X/De','FontWeight', 'bold')
+ylabel('Tt/Inlet Tt','FontWeight', 'bold')
+axis([tempxlimmin tempxlimmax tempylimmin tempylimmax])
+grid on
+grid minor
+legend(SimulationTitle1,SimulationTitle2,'Location','best')
+
+%Plotting the Y = 0.2D Temperature Values
+subplot(3,1,2)
+hold on
+plot(XOverD1(:,1),TemperatureSet1(:,2),'-k','LineWidth',linewidth);
+if IsSecondSimulation == 1 
+    plot(XOverD2(:,1),TemperatureSet2(:,2),'--k','LineWidth',linewidth);
+end
+hold off
+title('Y = 0.2D Total Temperature Ratio Vs X/D')
+xlabel('X/De','FontWeight', 'bold')
+ylabel('Tt/Inlet Tt','FontWeight', 'bold')
+axis([tempxlimmin tempxlimmax tempylimmin tempylimmax])
+grid on
+grid minor
+legend(SimulationTitle1,SimulationTitle2,'Location','best')
+
+%Plotting the Y = 0.4D Temperature Values
+subplot(3,1,1)
+hold on
+plot(XOverD1(:,1),TemperatureSet1(:,3),'-k','LineWidth',linewidth);
+if IsSecondSimulation == 1 
+    plot(XOverD2(:,1),TemperatureSet2(:,3),'--k','LineWidth',linewidth);
+end
+hold off
+title('Y = 0.4D Total Temperature Ratio Vs X/D')
+xlabel('X/De','FontWeight', 'bold')
+ylabel('Tt/Inlet Tt','FontWeight', 'bold')
+axis([tempxlimmin tempxlimmax tempylimmin tempylimmax])
+grid on
+grid minor
+legend(SimulationTitle1,SimulationTitle2,'Location','best')
+
+%Setting up the temperature export
+if IsSecondSimulation == 1
+    temperaturefile = strcat('../FiguresOutput/InternalTotalTemp_',SimulationTitle1,'Vs',SimulationTitle2,'.png');
+else
+    temperaturefile = strcat('../FiguresOutput/InternalTotalTemp_',SimulationTitle1,'.png');
+end
+saveas(gcf,temperaturefile)

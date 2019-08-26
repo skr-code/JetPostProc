@@ -1,0 +1,192 @@
+%Cleaning
+clear
+clc
+clf
+
+%Setting the format
+format long
+
+%User input------------------
+%The number of monitor points (Maximum number is 2)
+numofmonpoints = 2;
+
+%Name of simulation that first set of files is coming from
+SimulationTitle1 = 'ICDSV1-M2-P1';
+File1 = '../input1/SPL_cpr-p2-p-pt0.dat';
+File2 = '../input1/SPL_cpr-p2-p-pt1.dat';
+
+%Name of the simulation that the second set of files is coming from
+IsSecondSimulation = 1;     %put to 1 to activate
+SimulationTitle2 = 'ICDSV2-M2-P1';
+File3 = '../input2/SPL_cpr-p2-p-pt0.dat';
+File4 = '../input2/SPL_cpr-p2-p-pt1.dat';
+
+%Strouhal Information
+WantStrouhal = 1;
+De = 0.0728472;
+Uj = 425.8;
+
+%Determine if you want to use the reference data (1 for yes and 0 for no)
+UseRef = 0;
+
+%Plot Setting
+%Overall Strouhal Range [0.1 10]
+%Audible Strouhal Range [0.1710831 3.4216627]
+%Overall Frequency Range [100 100000]
+%Audible Frequency Range [1000 20000]
+
+%Range For Point 1
+P1xlimmin = .01;
+P1xlimmax = 3;
+P1ylimmin = 110;
+P1ylimmax = 140;
+
+%Range For Point 2
+P2xlimmin = .01;
+P2xlimmax = 3;
+P2ylimmin = 110;
+P2ylimmax = 140;
+
+%------------------------------
+%% Importing the Reference Data
+if UseRef == 1;
+    disp('Extracting The Reference Data...');
+    Z = importdata('../ReferenceData/ReferenceData.txt');
+
+    LiuMeasurement_X2Point2D_Y1D(:,1) = Z.data(1:end,1);
+    LiuMeasurement_X2Point2D_Y1D(:,2) = Z.data(1:end,2);
+
+    LiuLES_X2Point2D_Y1D(:,1) = Z.data(1:end,4);
+    LiuLES_X2Point2D_Y1D(:,2) = Z.data(1:end,5);
+
+    LiuLESWallFunc_X5D_Y2Point3D(:,1) = Z.data(1:end,7);
+    LiuLESWallFunc_X5D_Y2Point3D(:,2) = Z.data(1:end,8);
+
+    LiuMeasurement_X5D_Y2Point3D(:,1) = Z.data(1:end,10);
+    LiuMeasurement_X5D_Y2Point3D(:,2) = Z.data(1:end,11);
+
+    LiuLESSlipWall_X5D_Y2Point3D(:,1) = Z.data(1:end,13);
+    LiuLESSlipWall_X5D_Y2Point3D(:,2) = Z.data(1:end,14);
+
+    disp('Reference Data Extracted!');
+end
+
+%% Grabbing Data from First File
+%Looping through all of the data files to extract the pressure data
+disp('Extracting the Data From the First Simulation...'); 
+A = importdata(File1);
+FrequencySet1(:,1) = A(1:end,1);
+AmplitudeSet1(:,1) = A(1:end,2);
+disp('Data Extraction From First Simulation Complete!');
+
+if numofmonpoints == 2
+    B = importdata(File2);
+    FrequencySet1(:,2) = B(1:end,1);
+    AmplitudeSet1(:,2) = B(1:end,2);
+end
+
+disp('Data Extraction From First Simulation Complete!');
+
+if WantStrouhal == 1;
+    %Normalizing By Strouhal
+    disp('Performing Strouhal Normalization...');
+    if UseRef == 1;
+        LiuMeasurement_X2Point2D_Y1D(:,1) = LiuMeasurement_X2Point2D_Y1D(:,1).*(De/Uj);
+        LiuLES_X2Point2D_Y1D(:,1) = LiuLES_X2Point2D_Y1D(:,1).*(De/Uj);
+    end
+    FrequencySet1 = FrequencySet1.*(De/Uj);
+    if IsSecondSimulation == 0
+        disp('Strouhal Normalization Complete!');
+    end
+end
+
+%% Grabbing from Second File
+if IsSecondSimulation == 1
+    disp('Extracting the Data From the Second Simulation...'); 
+    C = importdata(File3);
+    FrequencySet2(:,1) = C(1:end,1);
+    AmplitudeSet2(:,1) = C(1:end,2);
+    disp('Data Extraction From Second Simulation Complete!'); 
+
+    if numofmonpoints == 2
+        D = importdata(File4);
+        FrequencySet2(:,2) = D(1:end,1);
+        AmplitudeSet2(:,2) = D(1:end,2);
+    end
+
+disp('Data Extraction From First Simulation Complete!');
+    
+    if WantStrouhal == 1;
+        %Normalizing By Strouhal
+        FrequencySet2 = FrequencySet2.*(De/Uj);
+        disp('Coordinate Point Extraction Complete!');
+    end
+end
+    
+%% Plotting The First Point
+disp('Plotting...');
+linewidth = 2;
+fontsize = 12;
+%Plotting the first point
+hold on
+if UseRef == 1;
+    plot(LiuLES_X2Point2D_Y1D(:,1),LiuLES_X2Point2D_Y1D(:,2),'--y');
+    plot(LiuMeasurement_X2Point2D_Y1D(:,1),LiuMeasurement_X2Point2D_Y1D(:,2),'ks');
+end
+plot(FrequencySet1(:,1),AmplitudeSet1(:,1),'-k','LineWidth',linewidth);
+if IsSecondSimulation == 1 
+    plot(FrequencySet2(:,1),AmplitudeSet2(:,1),'--k','LineWidth',linewidth);
+end
+hold off
+title('Overall SPL Spectrum Vs Frequency at Point 0')
+set(gca, 'XScale', 'log')
+ylabel('SPL (dB)','FontWeight', 'bold')
+xlabel('Frequency (f)','FontWeight', 'bold')
+if WantStrouhal == 1;
+    title('SPL Spectrum Vs Strouhal Number (De/Uj) at Point 0')
+    xlabel('Strouhal Number (fDe/Uj)','FontWeight', 'bold')
+end
+axis([P1xlimmin P1xlimmax P1ylimmin P1ylimmax])
+grid on
+grid minor
+if UseRef == 1;
+    legend('Liu-LES','Liu-Probe',SimulationTitle1,SimulationTitle2,'Location','best')
+else 
+    legend(SimulationTitle1,SimulationTitle2,'Location','best')
+end
+%Setting up the data export
+point1figfile = strcat('../FiguresOutput/InternalTotalPress_',SimulationTitle1,'.png');
+end
+saveas(gcf,pressurefile)
+
+%% Plotting the second point
+if numofmonpoints == 2
+    figure
+    hold on
+    if UseRef == 1;
+        plot(LiuLESSlipWall_X5D_Y2Point3D(:,1),LiuLESSlipWall_X5D_Y2Point3D(:,2),'--k');
+        plot(LiuLESWallFunc_X5D_Y2Point3D(:,1),LiuLESWallFunc_X5D_Y2Point3D(:,2),'--g');
+        plot(LiuMeasurement_X5D_Y2Point3D(:,1),LiuMeasurement_X5D_Y2Point3D(:,2),'ks');
+    end
+    plot(FrequencySet1(:,2),AmplitudeSet1(:,2),'-k','LineWidth',linewidth);
+    if IsSecondSimulation == 1 
+        plot(FrequencySet2(:,2),AmplitudeSet2(:,2),'--k','LineWidth',linewidth);
+    end
+    hold off
+    title('SPL Spectrum Vs Frequency at Point 1')
+    set(gca, 'XScale', 'log')
+    ylabel('SPL (dB)','FontWeight', 'bold')
+    xlabel('Frequency (f)','FontWeight', 'bold')
+    if WantStrouhal == 1;
+        title('Overall SPL Spectrum Vs Strouhal Number (De/Uj) at Point 1')
+        xlabel('Strouhal Number (fDe/Uj)','FontWeight', 'bold')
+    end
+    axis([P2xlimmin P2xlimmax P2ylimmin P2ylimmax])
+    grid on
+    grid minor
+    if UseRef == 1;
+        legend('Liu-LES-SlipWall','Liu-LES-WallFunc','Liu-Probe',SimulationTitle1,SimulationTitle2,'Location','best')
+    else
+        legend(SimulationTitle1,SimulationTitle2,'Location','best')
+    end
+end
